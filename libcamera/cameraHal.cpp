@@ -40,7 +40,13 @@
 struct blitreq {
    unsigned int count;
    struct mdp_blit_req req;
-};
+}
+
+#ifndef MSM_COPY_HW
+    if (fb_fd > 0)
+        close(fb_fd);
+     return false;
+#endif 
 
 /* Prototypes and extern functions. */
 android::sp<android::CameraHardwareInterface> (*LINK_openCameraHardware)(int id);
@@ -414,13 +420,15 @@ video_sizes);
 #endif
 
    if (!settings.get(android::CameraParameters::KEY_VIDEO_SIZE)) {
+      settings.set("record-size", preferred_size);
       settings.set(android::CameraParameters::KEY_VIDEO_SIZE, preferred_size);
    }
 
    if (!settings.get(android::CameraParameters::KEY_PREFERRED_PREVIEW_SIZE_FOR_VIDEO)) {
       settings.set(android::CameraParameters::KEY_PREFERRED_PREVIEW_SIZE_FOR_VIDEO,
-                   preferred_size);
-   }
+                   preferred_size);   
+      } else {      settings.set("record-size", settings.get(android::CameraParameters::KEY_VIDEO_SIZE)); 
+      }
 
    if (!settings.get(android::CameraParameters::KEY_SUPPORTED_PREVIEW_FRAME_RATES)) {
       settings.set(android::CameraParameters::KEY_SUPPORTED_PREVIEW_FRAME_RATES,
