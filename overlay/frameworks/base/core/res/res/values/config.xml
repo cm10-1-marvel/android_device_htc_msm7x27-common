@@ -77,10 +77,10 @@ should be empty. -->
          when starting the SoftAp -->
     <bool name="config_wifiApStartInterface">true</bool>
 
-    <!-- Flag indicating whether the we should enable the automatic 
-    
-    <!-- Disable software HDR on non-hw HDR devices -->
-    <bool name="disableSoftwareHDR">true</bool>
+ 
+    <!-- Flag indicating whether the we should enable the automatic brightness in Settings.
+         Software implementation will be used if config_hardware_auto_brightness_available is not set -->
+    <bool name="config_automatic_brightness_available">true</bool> 
 
     <!-- Control whether being in the desk dock (and powered) always
          keeps the screen on.  By default it stays on when plugged in to
@@ -198,3 +198,7 @@ should be empty. -->
         <item>com.google.android.location</item>
     </string-array>
 </resources>
+<resources>
+    <!-- Disable software HDR on non-hw HDR devices -->
+    <bool name="disableSoftwareHDR">true</bool>
+</resources> 
