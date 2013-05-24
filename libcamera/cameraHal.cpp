@@ -40,8 +40,7 @@
 struct blitreq {
    unsigned int count;
    struct mdp_blit_req req;
-}
-
+};
 
 /* Prototypes and extern functions. */
 android::sp<android::CameraHardwareInterface> (*LINK_openCameraHardware)(int id);
@@ -223,6 +222,11 @@ CameraHAL_HandlePreviewData(const android::sp<android::IMemory>& dataPtr,
       ssize_t offset;
       size_t size;
       int32_t previewFormat = MDP_Y_CBCR_H2V2;
+#ifdef HWA
+      int32_t destFormat = MDP_RGBX_8888;
+#else
+      int32_t destFormat = MDP_RGBA_8888;
+#endif
 
       android::status_t retVal;
       android::sp<android::IMemoryHeap> mHeap = dataPtr->getMemory(&offset,
@@ -233,11 +237,18 @@ CameraHAL_HandlePreviewData(const android::sp<android::IMemory>& dataPtr,
            (unsigned)offset, size, mHeap != NULL ? mHeap->base() : 0);
 
       mWindow->set_usage(mWindow,
+#ifndef HWA
                          GRALLOC_USAGE_PMEM_PRIVATE_ADSP |
+#endif
                          GRALLOC_USAGE_SW_READ_OFTEN);
       retVal = mWindow->set_buffers_geometry(mWindow,
                                              previewWidth, previewHeight,
-                                             HAL_PIXEL_FORMAT_YCrCb_420_SP);
+#ifdef HWA
+                                             HAL_PIXEL_FORMAT_RGBX_8888
+#else
+                                             HAL_PIXEL_FORMAT_RGBA_8888
+#endif
+                                             );
       if (retVal == NO_ERROR) {
          int32_t stride;
          buffer_handle_t *bufHandle = NULL;
@@ -249,12 +260,32 @@ CameraHAL_HandlePreviewData(const android::sp<android::IMemory>& dataPtr,
             if (retVal == NO_ERROR) {
                private_handle_t const *privHandle =
                   reinterpret_cast<private_handle_t const *>(*bufHandle);
-                  CameraHAL_CopyBuffers_Hw(mHeap->getHeapID(), privHandle->fd,
+               if (!CameraHAL_CopyBuffers_Hw(mHeap->getHeapID(), privHandle->fd,
                                              offset, privHandle->offset,
-                                             previewFormat, previewFormat,
+                                             previewFormat, destFormat,
                                              0, 0, previewWidth,
-                                             previewHeight);
-                                             
+                                             previewHeight)) {
+                  void *bits;
+                  android::Rect bounds;
+                  android::GraphicBufferMapper &mapper =
+                     android::GraphicBufferMapper::get();
+
+                  bounds.left = 0;
+                  bounds.top = 0;
+                  bounds.right = previewWidth;
+                  bounds.bottom = previewHeight;
+
+                  mapper.lock(*bufHandle, GRALLOC_USAGE_SW_READ_OFTEN, bounds,
+                              &bits);
+                  ALOGV("CameraHAL_HPD: w:%d h:%d bits:%p",
+                       previewWidth, previewHeight, bits);
+                  CameraHal_Decode_Sw((unsigned int *)bits, (char *)mHeap->base() + offset,
+                                      previewWidth, previewHeight);
+
+                  // unlock buffer before sending to display
+                  mapper.unlock(*bufHandle);
+               }
+
                mWindow->enqueue_buffer(mWindow, bufHandle);
                ALOGV("CameraHAL_HandlePreviewData: enqueued buffer\n");
             } else {
@@ -414,12 +445,8 @@ video_sizes);
 }
 #endif
 
-
    if (!settings.get(android::CameraParameters::KEY_VIDEO_SIZE)) {
-      settings.set("record-size", preferred_size);
       settings.set(android::CameraParameters::KEY_VIDEO_SIZE, preferred_size);
-   } else {
-      settings.set("record-size", settings.get(android::CameraParameters::KEY_VIDEO_SIZE));
    }
 
    if (!settings.get(android::CameraParameters::KEY_PREFERRED_PREVIEW_SIZE_FOR_VIDEO)) {
