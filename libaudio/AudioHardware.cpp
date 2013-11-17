@@ -45,7 +45,7 @@ const uint32_t AudioHardware::inputSamplingRates[] = {
 // ----------------------------------------------------------------------------
 
 AudioHardware::AudioHardware() :
-    mInit(false), mMicMute(true), mBluetoothNrec(true), mBluetoothId(0), mTtyMode(TTY_OFF),
+    mInit(false), mMicMute(true), mBluetoothNrec(true), mBluetoothId(0),
     mOutput(0), mSndEndpoints(NULL), mCurSndDevice(-1),
     SND_DEVICE_CURRENT(-1),
     SND_DEVICE_HANDSET(-1),
