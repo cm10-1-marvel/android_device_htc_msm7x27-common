@@ -48,6 +48,10 @@ PRODUCT_COPY_FILES += \
     device/htc/msm7x27-common/firmware/bcm4329.hcd:system/etc/firmware/bcm4329.hcd \
     device/htc/msm7x27-common/firmware/fw_bcm4329.bin:system/etc/firmware/fw_bcm4329.bin \
     device/htc/msm7x27-common/firmware/fw_bcm4329_apsta.bin:system/etc/firmware/fw_bcm4329_apsta.bin
+ ### Wi-fi (Tethering)
+PRODUCT_COPY_FILES += \
+     device/htc/msm7x27-common/firmware/wpa_supplicant.conf:system/etc/wifi/wpa_supplicant.conf \
+     device/htc/msm7x27-common/firmware/hostapd.conf:system/etc/wifi/hostapd.conf	
 
 # Bluetooth configuration files
 PRODUCT_COPY_FILES += \
